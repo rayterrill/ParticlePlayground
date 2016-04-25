@@ -7,16 +7,20 @@
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE);
 
+const int buttonPin = 5;
+int buttonState = 0;
+
 void setup() {
   Serial.begin(115200);
-  Serial.println("Device starting...");
   
-  //Subscribe to a particle subscription called "DidTheCubsWin"
-  //MY_DEVICES means it needs to come from one of my devices - i.e. not just anyone can make my device light up
+  //initialize button pin
+  pinMode(buttonPin, INPUT);
+  
+  Serial.println("Device starting...");
   Particle.subscribe("DidTheCubsWin", decideCubsStatus, MY_DEVICES);
 
   strip.begin();
-  strip.show();
+  strip.show(); // Initialize all pixels to 'off'
   pixelsOff();
 }
 
@@ -27,12 +31,8 @@ void decideCubsStatus(const char *event, const char *data) {
   int score1;
   int score2;
 
-  //use sscanf to parse the data from IFTTT to pull out the teams and scores
-  //usually looks like: Final: Mets 8 Cubs 1. WP: NYM S Matz (4-0) LP: CHC J Hammel (10-7) (ESPN)
-  //NOTE: This might not work for multi-word teams - White Sox, etc. Need to see more data to see how to handle
   sscanf (data,"%*s %s %d %s %d",&team1,&score1,&team2,&score2);
  
-  //Use strcmp to determine how to light up the LEDs
   if (((strcmp(team1,"Cubs") == 0) && score1 > score2) || ((strcmp(team2,"Cubs") == 0) && score2 > score1)) {
     pixelsOff();
     cubsWin();
@@ -43,7 +43,11 @@ void decideCubsStatus(const char *event, const char *data) {
 }
 
 void loop() {
-   //do something
+   buttonState = digitalRead(buttonPin);
+   
+   if (buttonState == HIGH) {
+      pixelsOff();
+   }
 }
 
 void pixelsOff() {
@@ -115,7 +119,6 @@ void pixelsOff() {
     strip.show();
 }
 
-//Make a blue "W"
 void cubsWin() {
     strip.setPixelColor(0, 15, 90, 138);
     strip.setPixelColor(1, 15, 90, 138);
@@ -185,7 +188,6 @@ void cubsWin() {
     strip.show();
 }
 
-//Make a white "L"
 void cubsLose() {
     strip.setPixelColor(0, 0, 0, 0);
     strip.setPixelColor(1, 0, 0, 0);
