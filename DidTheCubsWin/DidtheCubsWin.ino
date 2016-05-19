@@ -1,4 +1,7 @@
 // This #include statement was automatically added by the Particle IDE.
+#include "LiquidCrystal_I2C_Spark/LiquidCrystal_I2C_Spark.h"
+
+// This #include statement was automatically added by the Particle IDE.
 #include "neopixel/neopixel.h"
 
 #define PIXEL_PIN D2
@@ -7,21 +10,41 @@
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE);
 
+LiquidCrystal_I2C *lcd;
+
 const int buttonPin = 5;
 int buttonState = 0;
 
 void setup() {
   Serial.begin(115200);
-  
+
   //initialize button pin
   pinMode(buttonPin, INPUT);
-  
+
   Serial.println("Device starting...");
   Particle.subscribe("DidTheCubsWin", decideCubsStatus, MY_DEVICES);
 
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
   pixelsOff();
+  
+  lcd = new LiquidCrystal_I2C(0x27, 16, 2);
+  lcd->init();
+  lcd->clear();
+  
+  //to test things out manually
+  //const char *data = "Final: Brewers 4 Cubs 2. WP: MIL";
+  //decideCubsStatus(data); //requires function to be modified to void decideCubsStatus(const char *data)
+}
+
+void writeGameScoreLCD(char team1 [20], char team2 [20], int score1, int score2) {
+  lcd->backlight();
+  lcd->setCursor(0,0);
+  String outputTop =  String(String(team1) + " " + String(score1));
+  String outputBottom = String(String(team2) + " " + String(score2));
+  lcd->print(outputTop);
+  lcd->setCursor(0,1);
+  lcd->print(outputBottom);
 }
 
 void decideCubsStatus(const char *event, const char *data) {
@@ -32,7 +55,7 @@ void decideCubsStatus(const char *event, const char *data) {
   int score2;
 
   sscanf (data,"%*s %s %d %s %d",&team1,&score1,&team2,&score2);
- 
+
   if (((strcmp(team1,"Cubs") == 0) && score1 > score2) || ((strcmp(team2,"Cubs") == 0) && score2 > score1)) {
     pixelsOff();
     cubsWin();
@@ -40,13 +63,17 @@ void decideCubsStatus(const char *event, const char *data) {
     pixelsOff();
     cubsLose();
   }
+  
+  writeGameScoreLCD(team1, team2, score1, score2);
 }
 
 void loop() {
    buttonState = digitalRead(buttonPin);
-   
+
    if (buttonState == HIGH) {
       pixelsOff();
+      lcd->clear();
+      lcd->noBacklight();
    }
 }
 
