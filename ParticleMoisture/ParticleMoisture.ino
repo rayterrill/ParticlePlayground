@@ -4,7 +4,7 @@ int sensorPin = A0;    // set the input pin for the moisture sensor
 
 #define AIO_SERVER      "io.adafruit.com"
 #define AIO_SERVERPORT  1883                   // use 8883 for SSL
-#define AIO_USERNAME    "USERNAME
+#define AIO_USERNAME    "USERNAME"
 #define AIO_PASSWORD    "PASSWORD"
 
 void callback(char* topic, byte* payload, unsigned int length);
